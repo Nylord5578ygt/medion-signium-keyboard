@@ -1,13 +1,16 @@
 obj-m += medion_kbd.o
 
+KVERSION ?= $(shell uname -r)
+KDIR ?= /lib/modules/$(KVERSION)/build
+
+# Detect if the target kernel was built with Clang/LLVM (e.g. CachyOS) or GCC
+LLVM ?= $(shell grep -qE "clang|CONFIG_CC_IS_CLANG=y" "$(KDIR)/include/generated/compile.h" "$(KDIR)/.config" 2>/dev/null && echo 1 || echo 0)
+ifeq ($(LLVM),1)
+LLVM_OPT := LLVM=1
+endif
+
 all:
-	rm -rf /tmp/intc816_driver
-	mkdir -p /tmp/intc816_driver
-	cp medion_kbd.c /tmp/intc816_driver/
-	echo "obj-m += medion_kbd.o" > /tmp/intc816_driver/Makefile
-	make -C /lib/modules/$(shell uname -r)/build M=/tmp/intc816_driver modules
-	cp /tmp/intc816_driver/medion_kbd.ko .
+	$(MAKE) -C "$(KDIR)" M="$(CURDIR)" $(LLVM_OPT) modules
 
 clean:
-	make -C /lib/modules/$(shell uname -r)/build M=/tmp/intc816_driver clean
-	rm -rf /tmp/intc816_driver
+	$(MAKE) -C "$(KDIR)" M="$(CURDIR)" clean

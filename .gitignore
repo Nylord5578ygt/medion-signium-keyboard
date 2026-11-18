@@ -1,34 +1,26 @@
 # Kernel module build artifacts
-*.ko
 *.o
+*.ko
 *.mod
 *.mod.c
-*.cmd
+*.mod.o
+*.symvers
+*.order
+.*.cmd
+.*.d
 .tmp_versions/
+.cache.mk
 modules.order
 Module.symvers
 .medion_kbd.*
 
-# Private UEFI keys (CRITICAL: Do not upload these!)
+# Private UEFI Secure Boot MOK keys (do not commit)
 MOK.priv
 MOK.der
 
-# Temporary / Scratch directories and cache
+# Python and temporary files
 __pycache__/
+*.pyc
 .system_generated/
 scratch/
 *.log
-
-# Diagnostic and legacy test files
-scan_raw.py
-test_kmsg.py
-test_read.py
-interactive_mapper.py
-web_mapper.py
-keyboard_map.json
-dsdt.dat
-dsdt.dsl
-SSDT*.dsl
-SSDT*[0-9]
-medion_translate.py
-load_keymap.sh
