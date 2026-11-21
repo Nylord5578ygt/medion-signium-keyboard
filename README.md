@@ -1,18 +1,17 @@
-# Medion Signium 14 S1 OLED Linux Keyboard Driver and Hardware Fixes
+# Medion Signium 14 S1 OLED Linux Keyboard Driver
 
-Custom Linux `serio` kernel driver, automated DKMS installer, Fn hotkey handler, Caps Lock LED support, and optional ACPI battery charging-state fix for the **Medion Signium 14 S1 OLED** (board `NM14RPL`, Tongfang/Clevo barebone, and compatible laptops using the `INTC816` / non-standard AT Set 1 embedded controller interface).
+Custom Linux `serio` kernel driver, automated DKMS installer, Fn hotkey handler, and Caps Lock LED support for the **Medion Signium 14 S1 OLED** (board `NM14RPL`, Tongfang/Clevo barebone, and compatible laptops using the `INTC816` / non-standard AT Set 1 embedded controller interface).
 
-This repository combines and extends [`MrElmida/medion-signium-keyboard`](https://github.com/MrElmida/medion-signium-keyboard) and [`bolado-dev/medion-14-s1-oled-linux`](https://github.com/bolado-dev/medion-14-s1-oled-linux) into a single, self-healing driver package.
+This repository extends [`MrElmida/medion-signium-keyboard`](https://github.com/MrElmida/medion-signium-keyboard) into a complete, self-healing keyboard driver package.
 
 ## Overview of the Hardware Issues
 
-Out of the box on Linux distributions (Arch Linux, CachyOS, Fedora, Ubuntu, Debian, etc.), the Medion Signium 14 S1 OLED exhibits several embedded controller (EC) firmware quirks:
+Out of the box on Linux distributions (Arch Linux, CachyOS, Fedora, Ubuntu, Debian, etc.), the built-in keyboard on the Medion Signium 14 S1 OLED does not work properly with the standard `atkbd` driver due to several embedded controller (EC) firmware quirks:
 
 1. **Non-standard scancode translation:** The EC emits a custom AT Set 1 layout that causes the standard `atkbd` driver to misinterpret or ignore keystrokes.
 2. **Inverted modifier state:** Non-escaped `Right Alt` (`AltGr`) sends inverted make/break bytes (`0xb8` on press and `0x38` on release), sharing codes with `Left Alt`.
 3. **ACPI port deactivation:** Without `i8042.nopnp=1 i8042.direct=1`, ACPI initialization can leave `serio0` inactive.
 4. **Missing Caps Lock LED and Fn hotkeys:** Without explicit `EV_LED` (`0xed` `SETLEDS`) handling and extended scancode mappings, the Caps Lock indicator LED never lights up and multimedia/Fn keys (`Mute`, `Volume Down`, `Volume Up`, `Touchpad Toggle`, `Sleep`, etc.) do not function.
-5. **Battery charging status bug (optional ACPI fix):** On firmware versions where `BAT0._BST` directly returns the EC `B1ST` register, `BAT0` can report `Discharging` while plugged into AC power and charging.
 
 ## Key Features
 
@@ -24,9 +23,8 @@ Out of the box on Linux distributions (Arch Linux, CachyOS, Fedora, Ubuntu, Debi
 - **Automatic Clang/LLVM and GCC detection:** Detects whether the target kernel was compiled with Clang/LLVM (such as CachyOS) or GCC and passes `LLVM=1` automatically.
 - **UEFI Secure Boot support:** Automatically signs the module via `sign_module.sh` when Secure Boot is enabled, storing MOK keys persistently in `/etc/medion-kbd/mok` so kernel upgrades can re-sign automatically without re-enrolling a new key.
 - **Suspend/resume recovery:** Installs a `systemd-sleep` hook (`medion_kbd_resume.sh`) so the keyboard and LEDs recover cleanly after waking from sleep or hibernation.
-- **Optional ACPI battery charging-state fix:** Includes `battery-charging-fix/` to patch `BAT0._BST` via an initrd ACPI DSDT override so the desktop environment displays the `Charging` state accurately.
 
-## Quick Installation (Keyboard, Caps Lock LED, and Fn Hotkeys)
+## Quick Installation
 
 1. Enter the repository directory:
    ```bash
@@ -71,26 +69,6 @@ To inspect `F1`-`F12`, media hotkeys, and any unmapped scan codes in real time w
 sudo python3 watch_hotkeys.py --seconds 60
 ```
 
-## Optional: ACPI Battery Charging-State Fix
-
-If your Medion Signium 14 S1 OLED (board `NM14RPL`) reports `Discharging` in `/sys/class/power_supply/BAT0/status` even while plugged into AC power and actively charging, you can build and install the initrd ACPI DSDT override:
-
-```bash
-sudo ./battery-charging-fix/install.sh
-```
-
-On GRUB systems, this creates a separate test boot entry (`MEDION 14 S1 OLED (battery charging fix)`) without modifying your default entry. After verifying that `cat /sys/class/power_supply/BAT0/status` reports `Charging`, you can make it the default entry with:
-
-```bash
-sudo ./battery-charging-fix/install.sh --make-default
-```
-
-To remove the battery charging override:
-
-```bash
-sudo ./battery-charging-fix/uninstall.sh
-```
-
 ## Uninstallation
 
 To remove the keyboard driver, systemd service, sleep hook, modprobe configuration, and DKMS registration, and rebind `serio0` back to `atkbd`:
@@ -102,4 +80,4 @@ sudo ./uninstall.sh
 ## License and Credits
 
 - Licensed under the GNU General Public License v2.0 (see [LICENSE](LICENSE)).
-- Based on the original [`MrElmida/medion-signium-keyboard`](https://github.com/MrElmida/medion-signium-keyboard) driver and [`bolado-dev/medion-14-s1-oled-linux`](https://github.com/bolado-dev/medion-14-s1-oled-linux) (PS/2 `SETLEDS` Caps Lock LED control and ACPI `BAT0._BST` DSDT battery patch).
+- Based on the original [`MrElmida/medion-signium-keyboard`](https://github.com/MrElmida/medion-signium-keyboard) driver, with PS/2 `SETLEDS` Caps Lock LED control inspired by [`bolado-dev/medion-14-s1-oled-linux`](https://github.com/bolado-dev/medion-14-s1-oled-linux).
